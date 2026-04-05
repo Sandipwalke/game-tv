@@ -1,0 +1,16 @@
+[
+  {
+    "id": "poly-pizza-house",
+    "name": "Low Poly House",
+    "source": "https://poly.pizza/",
+    "license": "CC0",
+    "url": "https://example-r2-domain/assets/house.glb"
+  },
+  {
+    "id": "poly-pizza-tree",
+    "name": "Low Poly Tree",
+    "source": "https://poly.pizza/",
+    "license": "CC0",
+    "url": "https://example-r2-domain/assets/tree.glb"
+  }
+]
