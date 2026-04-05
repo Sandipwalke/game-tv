@@ -41,6 +41,8 @@ Optional:
 
 - `VITE_API_URL` (only needed if API is hosted separately)
 
+If `DATABASE_URL` is missing or PostgreSQL is temporarily unreachable, the server now boots in a fallback mode so deploys do not crash. In that mode, API responses are generated from `public/assets/registry.json` and interactions are accepted without persistence.
+
 ## 5) How database schema is handled
 
 On service startup, `server/index.ts` executes `server/sql/init.sql`:
