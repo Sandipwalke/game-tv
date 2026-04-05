@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { fetchWorld } from '../utils/api';
+import { fetchAssets, fetchWorld } from '../utils/api';
 import { generateFallbackTown } from '../utils/townGenerator';
 import { useWorldStore } from '../store/worldStore';
+import type { WorldObject } from '../types/world';
 
 export function useWorldData(): void {
   const setObjects = useWorldStore((state) => state.setObjects);
@@ -11,10 +12,24 @@ export function useWorldData(): void {
     let mounted = true;
     setLoadingProgress(10);
 
-    fetchWorld()
-      .then((data) => {
+    Promise.all([fetchWorld(), fetchAssets().catch(() => ({ assets: [] }))])
+      .then(([data, assetPayload]) => {
         if (!mounted) return;
-        setObjects(data.objects);
+        const knownIds = new Set(data.objects.map((object) => object.id));
+        const assetObjects: WorldObject[] = assetPayload.assets
+          .filter((asset) => !knownIds.has(asset.id))
+          .map((asset, index) => ({
+            id: asset.id,
+            name: asset.name,
+            type: 'asset',
+            modelUrl: asset.model_url,
+            position: [((index % 8) - 3.5) * 12, 0, 70 + Math.floor(index / 8) * 12],
+            rotation: [0, 0, 0],
+            scale: [1, 1, 1],
+            metadata: { source: 'assets-api' },
+          }));
+
+        setObjects([...data.objects, ...assetObjects]);
         setLoadingProgress(100);
       })
       .catch(() => {

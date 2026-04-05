@@ -1,11 +1,12 @@
 import type { JSX } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { FirstPersonControls, OrbitControls, Sky } from '@react-three/drei';
 import * as THREE from 'three';
 import { useWorldStore } from '../store/worldStore';
 import type { WorldObject } from '../types/world';
 import { postInteraction } from '../utils/api';
+import { loadModel } from './ModelCache';
 
 function DayNightLighting(): JSX.Element {
   const isNight = useWorldStore((state) => state.isNight);
@@ -126,6 +127,61 @@ function CarAnimator({ objects }: { objects: WorldObject[] }): JSX.Element {
   );
 }
 
+function AssetModel({ object }: { object: WorldObject }): JSX.Element | null {
+  const [model, setModel] = useState<THREE.Group | null>(null);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!object.modelUrl) {
+      setModel(null);
+      return;
+    }
+
+    loadModel(object.modelUrl)
+      .then((scene) => {
+        if (!mounted) return;
+        const clone = scene.clone(true);
+        clone.traverse((child) => {
+          if ('castShadow' in child) {
+            child.castShadow = true;
+          }
+          if ('receiveShadow' in child) {
+            child.receiveShadow = true;
+          }
+          child.userData = { ...child.userData, objectId: object.id };
+        });
+        setModel(clone);
+      })
+      .catch(() => {
+        if (!mounted) return;
+        setModel(null);
+      });
+
+    return () => {
+      mounted = false;
+    };
+  }, [object.id, object.modelUrl]);
+
+  if (model) {
+    return (
+      <primitive
+        object={model}
+        position={object.position}
+        rotation={object.rotation}
+        scale={object.scale}
+        userData={{ objectId: object.id }}
+      />
+    );
+  }
+
+  return (
+    <mesh position={object.position} rotation={object.rotation} scale={object.scale} castShadow userData={{ objectId: object.id }}>
+      <boxGeometry args={[3, 3, 3]} />
+      <meshStandardMaterial color="#f59e0b" />
+    </mesh>
+  );
+}
+
 function TownMeshes(): JSX.Element {
   const objects = useWorldStore((state) => state.objects);
   const selectedObjectId = useWorldStore((state) => state.selectedObjectId);
@@ -135,6 +191,7 @@ function TownMeshes(): JSX.Element {
   const buildings = useMemo(() => objects.filter((o) => o.type === 'building'), [objects]);
   const trees = useMemo(() => objects.filter((o) => o.type === 'tree'), [objects]);
   const vehicles = useMemo(() => objects.filter((o) => o.type === 'vehicle'), [objects]);
+  const assets = useMemo(() => objects.filter((o) => o.type === 'asset' || Boolean(o.modelUrl)), [objects]);
 
   return (
     <group>
@@ -169,6 +226,9 @@ function TownMeshes(): JSX.Element {
 
       <InstancedTrees trees={trees} />
       <CarAnimator objects={vehicles} />
+      {assets.map((asset) => (
+        <AssetModel key={asset.id} object={asset} />
+      ))}
 
       {buildings.slice(0, 12).map((building, index) => (
         <pointLight

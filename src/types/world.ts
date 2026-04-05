@@ -3,7 +3,7 @@ export type Vec3 = [number, number, number];
 export interface WorldObject {
   id: string;
   name: string;
-  type: 'building' | 'road' | 'vehicle' | 'tree' | 'light' | 'bench';
+  type: 'building' | 'road' | 'vehicle' | 'tree' | 'light' | 'bench' | 'asset';
   modelUrl?: string;
   position: Vec3;
   rotation: Vec3;
@@ -14,4 +14,12 @@ export interface WorldObject {
 export interface WorldPayload {
   worldName: string;
   objects: WorldObject[];
+}
+
+export interface AssetPayload {
+  assets: Array<{
+    id: string;
+    name: string;
+    model_url: string;
+  }>;
 }
