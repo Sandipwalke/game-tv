@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build && tsc -p tsconfig.server.json",
+    "build": "tsc -b && vite build && tsc -p tsconfig.server.json && mkdir -p server-dist/sql && cp server/sql/init.sql server-dist/sql/init.sql",
     "preview": "vite preview",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit && tsc -p tsconfig.server.json --noEmit",
