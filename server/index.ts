@@ -77,15 +77,19 @@ async function loadFallbackWorld(): Promise<WorldPayload> {
 
   try {
     const registryRaw = await fs.readFile(registryPath, 'utf-8');
-    const parsed = JSON.parse(registryRaw) as { assets?: Array<{ id: string; label?: string; url?: string }> };
-    const objects = (parsed.assets ?? []).map((asset, index) => ({
+    const parsed = JSON.parse(registryRaw) as
+      | Array<{ id: string; label?: string; name?: string; url?: string; source?: string; license?: string }>
+      | { assets?: Array<{ id: string; label?: string; name?: string; url?: string; source?: string; license?: string }> };
+    const assets = Array.isArray(parsed) ? parsed : parsed.assets ?? [];
+    const objects = assets.map((asset, index) => ({
       id: asset.id || `fallback-object-${index + 1}`,
-      name: asset.label ?? asset.id ?? `Object ${index + 1}`,
+      name: asset.name ?? asset.label ?? asset.id ?? `Object ${index + 1}`,
       type: 'asset',
       modelUrl: asset.url,
       position: [index * 4, 0, 0] as [number, number, number],
       rotation: [0, 0, 0] as [number, number, number],
       scale: [1, 1, 1] as [number, number, number],
+      metadata: { source: asset.source, license: asset.license },
     }));
 
     return {
